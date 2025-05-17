@@ -1,11 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import {Injectable} from '@nestjs/common';
+import {InjectModel} from '@nestjs/mongoose';
+import {Model} from 'mongoose';
+import {User, UserModel} from '../../schemas/user/user.schema';
+import * as bcrypt from 'bcrypt';
 import {AuthUserDto} from "./dto/auth-user.dto";
-import {ProfileUserDto} from "./dto/profile-user.dto";
-import {UpdateUserDto} from "./dto/update-user.dto";
+import {LoginUserDto} from "./dto/login-user.dto";
+import {JwtService} from "@nestjs/jwt";
 
 @Injectable()
 export class AuthService {
-    constructor(@InjectModel(User) private userModel: Model<UserDocument>) {}
+    constructor(
+        @InjectModel(User.name) private userModel: Model<UserModel>,
+        private readonly jwtService: JwtService,
+    ) {}
 
     /**
      * Register a new user
@@ -15,22 +22,55 @@ export class AuthService {
      * @returns {Promise<User>}
      */
     async register(registerUserDto: AuthUserDto): Promise<User> {
-        const { username, password } = registerUserDto;
+        const {username, password} = registerUserDto;
 
-        const existingUser = await this.userModel.findOne({ username }).exec();
-        if (!existingUser) {
+        // Check if the user already exists
+        const existingUser = await this.userModel.findOne({username}).exec();
+        if (existingUser) {
             throw new Error('User already exists');
         }
 
-        const hashedPassword = await bcrypt.hash(password, 12);
+        // Hash the password
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Create the new user
+        // Add the color and avatar properties
+        const color = registerUserDto.color || '#000000';
+        const avatar = registerUserDto.avatar || '';
+
+        // Create a new user
         const newUser = new this.userModel({
-            username,
+            username: username,
             password: hashedPassword,
-            color: '#000000', // DEFAULT COLOR
-            avatar: '',
+            color: color,
+            avatar: avatar,
         });
+        return newUser.save();
+    }
+
+    /**
+     * Login a user
+     *
+     *
+     * @returns {Promise<User | null>}
+     * @param loginUserDto
+     */
+    async login(loginUserDto: LoginUserDto): Promise<{ access_token: string }> {
+        const { username, password } = loginUserDto;
+        const user = await this.validateUser(username, password);
+
+        if (!user) {
+            throw new Error('Invalid credentials');
+        }
+
+        const payload = {
+            username: user.username,
+            identifier: user._id,
+        };
+
+        return {
+            access_token: this.jwtService.sign(payload),
+        };
     }
 
     /**
@@ -41,76 +81,15 @@ export class AuthService {
      *
      * @returns {Promise<any>}
      */
-    async validateUser(username: string, password: string): Promise<any> {
+    async validateUser(username: string, password: string): Promise<UserModel | null> {
         const user = await this.userModel.findOne({ username }).exec();
         if (!user) {
             return null;
         }
-
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return null;
+        }
         return user;
-    }
-
-    /**
-     * Login user
-     *
-     * @param loginUserDto
-     *
-     * @returns {Promise<any>}
-     */
-    async login(loginUserDto: LoginUserDto): Promise<{ access_token: string }> {
-        const { username, password } = loginUserDto;
-        const user = await this.validateUser(username, password);
-        if (!user) {
-            throw new Error('Invalid credentials');
-        }
-
-        const payload = { username: user.username, sub: user._id };
-        return {
-            access_token: this.jwtService.sign(payload),
-        };
-    }
-
-    /**
-     * Profile of the user
-     *
-     * @param userId
-     *
-     * @returns {Promise<User>}
-     */
-    async profile(userId: string): Promise<ProfileUserDto> {
-        const user = await this.userModel.findById(userId).exec();
-        if (!user) {
-            throw new Error('User not found');
-        }
-
-        return {username: user.username, color: user.color, avatar: user.avatar};
-    }
-
-    /**
-     * Update user profile
-     *
-     * @param userId
-     *
-     * @returns {Promise<UpdateUserDto>}
-     */
-    async updateProfile(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
-        const user = await this.userModel.findById(userId).exec();
-        if (!user) {
-            throw new Error('User not found');
-        }
-
-        if (updateUserDto.username) {
-            user.username = updateUserDto.username;
-        }
-
-        if (updateUserDto.color) {
-            user.color = updateUserDto.color;
-        }
-
-        if (updateUserDto.avatar) {
-            user.avatar = updateUserDto.avatar;
-        }
-
-        await user.save();
     }
 }
