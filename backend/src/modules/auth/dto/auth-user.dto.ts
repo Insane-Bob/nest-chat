@@ -1,4 +1,4 @@
-export class RegisterUserDto {
+export class AuthUserDto {
     username: string;
     password: string;
     color: string;
