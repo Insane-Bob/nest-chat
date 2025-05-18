@@ -31,10 +31,6 @@
             />
           </div>
 
-          <div v-if="error" class="text-red-500 text-sm mt-2 mb-2">
-            {{ error }}
-          </div>
-
           <div class="flex justify-center">
             <Button type="submit" class="w-full bg-blue-600 hover:bg-blue-700">
               Login
@@ -72,15 +68,13 @@ const router = useRouter();
 
 const username = ref("");
 const password = ref("");
-const error = ref("");
 
 const handleLogin = async () => {
   try {
-    const response = await login(username.value, password.value);
-    localStorage.setItem("token", response);
+    await login(username.value, password.value);
     router.push('/')
   } catch (err) {
-    error.value = err.response?.data?.message || "Login failed";
+    error.value = err.response?.data?.message;
   }
 };
 </script>

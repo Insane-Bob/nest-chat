@@ -11,8 +11,8 @@ export class UpdateUserDto {
     @Matches(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i, { message: 'Color must be a valid hex code' })
     color?: string;
 
-    @IsString()
-    @IsOptional()
-    @Matches(/^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|svg))$/i, { message: 'Avatar must be a valid URL' })
-    avatar?: string;
+    // @IsString()
+    // @IsOptional()
+    // @Matches(/^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|svg))$/i, { message: 'Avatar must be a valid URL' })
+    // avatar?: string;
 }

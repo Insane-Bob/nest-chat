@@ -7,5 +7,6 @@ async function bootstrap() {
         origin: ['http://localhost:5173'],
     });
     await app.listen(process.env.PORT ?? 3000);
+    app.useLogger(['log', 'error', 'warn', 'debug', 'verbose']);
 }
 bootstrap();
