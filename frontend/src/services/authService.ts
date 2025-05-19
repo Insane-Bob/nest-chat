@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { useUserStore } from '@/stores/useUserStore.ts'
+import {useUserStore} from '@/stores/useUserStore.ts'
 
 const API_URL = 'http://localhost:3000/auth/'
 
@@ -24,33 +24,29 @@ export const register = async (
 export const login = async (
     username: string,
     password: string
-): Promise<string> => {
-    try {
-        const response = await axios.post(`${API_URL}login`, {
-            username,
-            password,
-        })
+): Promise<{ token: string, user: Omit<SafeUser, 'password'> }> => {
+    const response = await axios.post(`${API_URL}login`, {
+        username,
+        password,
+    })
 
-        const token: string = response.data.access_token
-        const user: SafeUser = response.data.user
+    const token: string = response.data.access_token
+    const user: SafeUser = response.data.user
 
-        // Pinia Store
-        const userStore = useUserStore()
-        userStore.setToken(token)
-        userStore.setUser(user)
+    // Pinia Store
+    const userStore = useUserStore()
+    userStore.setToken(token)
+    userStore.setUser(user)
 
-        // Local Storage
-        localStorage.setItem('jwt', token)
-        localStorage.setItem('user', JSON.stringify(user))
+    // Local Storage
+    localStorage.setItem('jwt', token)
+    localStorage.setItem('user', JSON.stringify(user))
 
-        const { password: _, ...userWithoutPassword } = user.toObject();
+    console.log(user);
 
-        return {
-            token,
-            user: userWithoutPassword,
-        }
-    } catch (error: any) {
-        throw new Error(error.response?.data?.message || 'Login failed')
+    return {
+        token,
+        user,
     }
 }
 

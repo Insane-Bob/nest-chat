@@ -16,7 +16,8 @@
         },
         actions: {
             setUser(user: User) {
-                this.user = user
+                this.user = user;
+                localStorage.setItem('user', JSON.stringify(user));
             },
             setToken(token: string) {
                 this.token = token

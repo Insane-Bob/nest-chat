@@ -1,5 +1,5 @@
 <template>
-  <div class="flex justify-center items-center h-screen">
+  <div class="flex justify-center items-center h-fit">
     <Card class="w-96">
       <CardHeader>
         <CardTitle>Login</CardTitle>
@@ -63,18 +63,23 @@ import {Input} from '@/components/ui/input'
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { login } from "@/services/authService.js";
-
-const router = useRouter();
+import { useToast } from "@/composables/useToastStore.js";
 
 const username = ref("");
 const password = ref("");
+const error = ref('');
 
+const router = useRouter();
+
+const { showToast } = useToast();
 const handleLogin = async () => {
   try {
     await login(username.value, password.value);
-    router.push('/')
+    showToast('Login successful! Redirecting to your profile...', 'success');
+    router.push('/profile');
   } catch (err) {
-    error.value = err.response?.data?.message;
+    showToast('Invalid username or password. Please try again.', 'error');
+    console.error(err);
   }
 };
 </script>

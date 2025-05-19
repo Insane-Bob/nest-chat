@@ -58,9 +58,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useUserStore } from '@/stores/useUserStore'
-import { useAuthGuard } from '@/composables/useAuthGuard'
+import {ref} from 'vue'
+import {useUserStore} from '@/stores/useUserStore'
+import {useAuthGuard} from '@/composables/useAuthGuard'
 import {
   Card,
   CardContent,
@@ -68,16 +68,17 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { updateProfile } from '@/services/userService'
+import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar'
+import {Input} from '@/components/ui/input'
+import {Button} from '@/components/ui/button'
+import {updateProfile} from '@/services/userService'
+import {useToast} from "@/composables/useToastStore.js";
 
+const {showToast} = useToast();
 useAuthGuard()
 
+// Importing necessary components and services for the Auth
 const userStore = useUserStore()
-
-// Hydrate au cas où
 userStore.hydrateFromLocalStorage()
 
 const username = ref(userStore.user?.username ?? '')
@@ -104,18 +105,20 @@ async function handleSubmit() {
     const token = userStore.token;
     if (!token) throw new Error('Missing token');
 
-    console.log('Token envoyé:', token)
-
     const updateUserDto = {
       username: username.value,
       color: color.value,
+      avatar: avatarPreview.value,
     };
 
-    const updatedUser = await updateProfile(token, userStore.user?._id || userStore.user?.id, updateUserDto);
-
+    const updatedUser = await updateProfile(token, updateUserDto);
     userStore.setUser(updatedUser);
-  } catch (err) {
-    console.error(err);
+
+    showToast('Profile updated successfully!', 'success')
+
+  } catch (error) {
+    console.error('Error updating profile:', error)
+    showToast('Failed to update profile. Please try again.', 'error')
   }
 }
 </script>

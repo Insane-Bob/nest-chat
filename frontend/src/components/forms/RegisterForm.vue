@@ -74,7 +74,9 @@ import {
 import {Input} from '@/components/ui/input'
 import {Label} from "@/components/ui/label/index.js";
 import { register } from '@/services/authService'
+import { useToast } from "@/composables/useToastStore.js";
 
+const { showToast } = useToast();
 const router = useRouter()
 
 const username = ref('')
@@ -82,7 +84,17 @@ const password = ref('')
 const color = ref('#000000')
 
 const handleRegister = async () => {
-    await register(username.value, password.value, color.value)
-    router.push('/login');
+    try {
+        const response = await register(username.value, password.value, color.value)
+        if (response.status === 201) {
+            router.push('/login')
+            showToast('Registration successful! Please login.', 'success')
+        } else {
+            showToast('Registration failed. Please try again.', 'error')
+        }
+    } catch (error) {
+        console.error('Registration error:', error)
+        showToast('An error occurred during registration. Please try again.', 'error')
+    }
 }
 </script>

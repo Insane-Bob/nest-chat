@@ -7,12 +7,11 @@ import LoginPage from '@/pages/authentication/LoginPage.vue'
 import ProfilePage from '@/pages/profile/ProfilePage.vue'
 
 const routes = [
-    { path: '/', component: ChatPage },
+    { path: '/chat', component: ChatPage, meta: { requiresAuth: true } },
     { path: '/register', component: RegisterPage },
     { path: '/login', component: LoginPage },
     {
-        path: '/profile'    ,
-        component: ProfilePage,
+        path: '/profile', component: ProfilePage,
         meta: { requiresAuth: true },
     },
 ]

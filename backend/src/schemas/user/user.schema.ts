@@ -16,6 +16,9 @@ export class User {
 
     @Prop({ default: '' })
     avatar: string;
+
+    @Prop({ default: false })
+    connected: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

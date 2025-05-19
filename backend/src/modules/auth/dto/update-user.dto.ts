@@ -8,7 +8,6 @@ export class UpdateUserDto {
 
     @IsString()
     @IsOptional()
-    @Matches(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i, { message: 'Color must be a valid hex code' })
     color?: string;
 
     // @IsString()
