@@ -1,39 +1,47 @@
 <template>
-  <div class="chat-container">
-    <div class="messages">
-      <div v-for="(msg, index) in messages" :key="index">{{ msg }}</div>
-    </div>
-    <Input
-        type="text"
-        v-model="input"
-        @keydown.enter="sendMessage"
-    />
-    <button @click="sendMessage">Send</button>
-  </div>
+  <Card class="max-w-md mx-auto mt-10">
+    <CardHeader>
+      <CardTitle>Conversation</CardTitle>
+      <CardDescription>
+        Participants: {{ participantNames }}
+      </CardDescription>
+    </CardHeader>
+
+    <CardContent class="h-96 overflow-y-auto space-y-4 bg-gray-50 rounded-md p-4 flex flex-col">
+      <template v-if="chat && chat.messages.length">
+        <div
+            v-for="message in chat.messages"
+            :key="message._id"
+            class="max-w-[70%] p-3 rounded-lg shadow bg-white text-gray-900 whitespace-pre-wrap break-words"
+        >
+          <div class="text-xs font-semibold mb-1">{{ message.sender.username }}</div>
+          <div>{{ message.content }}</div>
+          <div class="text-xs text-gray-400 mt-1 text-right">
+            {{ formatTime(message.timestamp) }}
+          </div>
+        </div>
+      </template>
+      <template v-else>
+        <p class="text-center text-gray-500">No messages yet</p>
+      </template>
+    </CardContent>
+  </Card>
 </template>
 
-<script setup>
-import { Input } from '@/components/ui/input'
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { io } from 'socket.io-client'
+<script lang="ts" setup>
+import type { Chat } from '@/types/chat';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
-const socket = io('http://localhost:3000')
-const messages = ref([])
-const input = ref('')
+defineProps<{ chat: Chat | null }>();
 
-function sendMessage() {
-  if (input.value.trim() === '') return
-  socket.emit('sendMessage', input.value)
-  input.value = ''
+const props = defineProps<{ chat: Chat | null }>();
+
+function formatTime(timestamp: string) {
+  const d = new Date(timestamp);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-onMounted(() => {
-  socket.on('receiveMessage', (message) => {
-    messages.value.push(message)
-  })
-})
-
-onBeforeUnmount(() => {
-  socket.off('receiveMessage')
-})
+const participantNames = computed(() =>
+    props.chat?.participants.map((p) => p.username).join(', ') ?? ''
+);
 </script>

@@ -5,6 +5,10 @@ export type ChatModel = Chat & Document;
 
 @Schema()
 export class Chat {
+
+    @Prop({ type: String, required: true })
+    chatName: string;
+
     @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], required: true })
     participants: Types.ObjectId[];
 

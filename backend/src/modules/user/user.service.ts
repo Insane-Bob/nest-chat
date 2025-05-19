@@ -17,6 +17,7 @@
         async findAll(): Promise<ProfileUserDto[]> {
             const users = await this.userModel.find().exec();
             return users.map((user) => ({
+                userId: user._id,
                 username: user.username,
                 color: user.color,
                 avatar: user.avatar,

@@ -16,7 +16,35 @@ export class ChatController {
 
     @UseGuards(JwtAuthGuard)
     @Get()
-    async getChats(@Request() request): Promise<Chat[]> {
-        return this.chatService.getChats(request.user._id,);
+    async getChats(@Request() req): Promise<Chat[]> {
+        return this.chatService.getChats(req.user.userId);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':chatId')
+    async getChatById(@Request() req): Promise<Chat> {
+        return this.chatService.getChatById(req.params.chatId);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':chatId')
+    async getChatDetails(@Param('chatId') chatId: string): Promise<Chat> {
+        return this.chatService.getChatDetails(chatId);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Put(':chatId')
+    async deleteChat(@Request() req): Promise<Chat> {
+        return this.chatService.deleteChat(req.params.chatId);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':chatId/messages')
+    async sendMessage(
+        @Param('chatId') chatId: string,
+        @Request() req,
+        @Body() sendMessageDto: SendMessageDto
+    ): Promise<Chat> {
+        return this.chatService.sendMessages(chatId, req.user.userId, sendMessageDto);
     }
 }

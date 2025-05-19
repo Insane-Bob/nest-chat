@@ -1,97 +1,150 @@
 <template>
-  <Card class="w-96 mx-auto mt-10">
-    <CardHeader>
-      <CardTitle>Create Chat</CardTitle>
-      <CardDescription>Select participants to invite</CardDescription>
-    </CardHeader>
+  <div class="flex justify-center items-center h-fit">
+    <Card class="w-96">
+      <CardHeader>
+        <CardTitle>Create Chat</CardTitle>
+        <CardDescription>
+          Choose a chat name and select participants
+        </CardDescription>
+      </CardHeader>
 
-    <CardContent>
-      <form @submit.prevent="handleSubmit">
-        <div class="mb-4">
-          <label class="block mb-1 font-medium">Participants</label>
-          <select
-              v-model="selectedParticipants"
-              multiple
-              class="w-full border rounded p-2"
-              size="5"
-          >
-            <option
-                v-for="user in users"
-                :key="user.id"
-                :value="user.id"
+      <CardContent>
+        <form @submit.prevent="handleSubmit">
+          <div class="mb-4">
+            <Input
+                id="chatName"
+                v-model="chatName"
+                type="text"
+                placeholder="Chat name"
+                class="w-full"
+            />
+          </div>
+
+          <div class="mb-4">
+            <Label for="participants" class="mb-1 block text-gray-600">
+              Participants
+            </Label>
+
+            <Select
+                :modelValue="selectedParticipantId"
+                @update:modelValue="val => selectedParticipantId = val"
+                id="participants"
+                class="w-full"
             >
-              {{ user.username }}
-            </option>
-          </select>
-        </div>
+              <SelectTrigger class="w-full">
+                <SelectValue placeholder="Select a participant" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Users</SelectLabel>
+                  <SelectItem
+                      v-for="user in allUsers"
+                      :key="user.userId"
+                      :value="user.userId"
+                  >
+                    {{ user.username }}
+                    <span v-if="user.connected" class="text-green-500">
+                      (Online)
+                    </span>
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <Button type="submit" class="w-full bg-blue-600 hover:bg-blue-700">
-          Create Chat
-        </Button>
-      </form>
-      <p v-if="message" :class="messageClass" class="mt-4 text-center text-sm">{{ message }}</p>
-    </CardContent>
-  </Card>
+          <Button type="submit" class="w-full bg-blue-600 hover:bg-blue-700">
+            Create Chat
+          </Button>
+        </form>
+      </CardContent>
+
+      <CardFooter>
+        <p
+            v-if="message"
+            :class="{
+            'text-green-600': !isError,
+            'text-red-600': isError,
+          }"
+            class="text-center text-sm"
+        >
+          {{ message }}
+        </p>
+      </CardFooter>
+    </Card>
+  </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { Button } from '@/components/ui/button'
+<script lang="ts" setup>
+import { ref, onMounted, watch } from 'vue';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { findAllUsers } from '@/services/userService'
-import { createChat } from '@/services/chatService'
-import { useToast } from '@/composables/useToastStore'
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { findAllUsers } from '@/services/userService';
+import { createChat } from '@/services/chatService';
 
-const { showToast } = useToast()
+interface User {
+  _id: string;
+  username: string;
+}
 
-const users = ref<Array<{ id: string; username: string }>>([])
-const selectedParticipants = ref<string[]>([])
-const message = ref('')
-const isLoading = ref(false)
-
-const token = localStorage.getItem('jwt')
-
-const messageClass = computed(() => {
-  return message.value.startsWith('Error') ? 'text-red-500' : 'text-green-500'
-})
+const chatName = ref('');
+const selectedParticipantId = ref('');
+const allUsers = ref<User[]>([]);
+const message = ref('');
+const isError = ref(false);
 
 onMounted(async () => {
-  if (!token) {
-    message.value = 'Error: Token not found'
-    return
-  }
   try {
-    users.value = await findAllUsers(token)
-  } catch (error: any) {
-    message.value = `Error loading users: ${error.message || error}`
+    const token = localStorage.getItem('jwt');
+    if (token) {
+      allUsers.value = await findAllUsers(token);
+    }
+  } catch {
+    message.value = 'Failed to load users';
+    isError.value = true;
   }
-})
+});
 
 const handleSubmit = async () => {
-  if (!token) {
-    message.value = 'Error: Token not found'
-    return
+  if (!chatName.value.trim() || !selectedParticipantId.value) {
+    message.value = 'Please fill all fields and select a participant';
+    isError.value = true;
+    return;
   }
-  if (selectedParticipants.value.length === 0) {
-    message.value = 'Error: No participants selected'
-    return
-  }
-  isLoading.value = true
-  message.value = ''
+
   try {
-    await createChat(token, selectedParticipants.value)
-    message.value = 'Chat created successfully'
-    selectedParticipants.value = []
-  } catch (error: any) {
-    message.value = `Error: ${error.message || error}`
-  } finally {
-    isLoading.value = false
+    const token = localStorage.getItem('jwt');
+    if (!token) throw new Error('No token found');
+
+    await createChat(token, {
+      chatName: chatName.value.trim(),
+      participants: [selectedParticipantId.value],
+    });
+
+    message.value = 'Chat created successfully';
+    isError.value = false;
+    chatName.value = '';
+    selectedParticipantId.value = '';
+  } catch (err: any) {
+    message.value = `Error: ${err.message || 'Unknown error'}`;
+    isError.value = true;
   }
-}
+};
 </script>

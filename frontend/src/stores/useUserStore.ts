@@ -1,9 +1,11 @@
     import { defineStore } from 'pinia'
 
     export interface User {
+        _id: string
         username: string
         color: string
         avatar?: string
+        connected: boolean
     }
 
     export const useUserStore = defineStore('user', {

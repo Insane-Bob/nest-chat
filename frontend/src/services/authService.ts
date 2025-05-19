@@ -42,8 +42,6 @@ export const login = async (
     localStorage.setItem('jwt', token)
     localStorage.setItem('user', JSON.stringify(user))
 
-    console.log(user);
-
     return {
         token,
         user,

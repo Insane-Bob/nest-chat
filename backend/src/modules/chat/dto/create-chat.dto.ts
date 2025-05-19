@@ -1,7 +1,10 @@
-import { IsArray, IsString, ArrayMinSize } from 'class-validator';
+import { IsArray, IsMongoId, ArrayNotEmpty } from 'class-validator';
 
 export class CreateChatDto {
     @IsArray()
-    @IsString({ each: true })
+    @ArrayNotEmpty()
+    @IsMongoId({ each: true })
     participants: string[];
+
+    chatName: string;
 }
