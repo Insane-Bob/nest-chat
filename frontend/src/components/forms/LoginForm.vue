@@ -1,5 +1,5 @@
 <template>
-  <div class="flex justify-center items-center h-fit">
+  <div class="flex justify-center items-center h-screen">
     <Card class="w-96">
       <CardHeader>
         <CardTitle>Login</CardTitle>

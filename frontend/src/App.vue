@@ -18,7 +18,7 @@
 
       <!-- Router View (Main) -->
       <main class="flex-1 overflow-y-auto bg-muted/50 p-4">
-        <div class="h-full flex justify-center items-center">
+        <div class="flex justify-center">
           <router-view />
         </div>
       </main>

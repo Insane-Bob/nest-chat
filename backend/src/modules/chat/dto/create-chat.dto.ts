@@ -1,4 +1,5 @@
-import { IsArray, IsMongoId, ArrayNotEmpty } from 'class-validator';
+import { IsArray, IsMongoId, ArrayNotEmpty, IsEnum, IsOptional, IsString } from 'class-validator';
+import {ChatVisibility} from '../enums/chat-visibility.enum';
 
 export class CreateChatDto {
     @IsArray()
@@ -6,5 +7,13 @@ export class CreateChatDto {
     @IsMongoId({ each: true })
     participants: string[];
 
+    @IsMongoId()
+    ownerId: string;
+
+    @IsString()
     chatName: string;
+
+    @IsEnum(ChatVisibility)
+    @IsOptional()
+    visibility?: ChatVisibility;
 }

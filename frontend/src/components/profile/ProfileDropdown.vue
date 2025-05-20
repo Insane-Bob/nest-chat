@@ -15,7 +15,9 @@
       <DropdownMenuSeparator />
 
       <DropdownMenuItem>
-        <span>Profile</span>
+        <RouterLink to="/profile" class="w-full">
+            Profile
+        </RouterLink>
       </DropdownMenuItem>
 
       <DropdownMenuItem @click="logout" class="text-destructive">

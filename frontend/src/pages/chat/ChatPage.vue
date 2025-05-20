@@ -1,7 +1,5 @@
 <template>
-    <ChatForm />
     <ChatList />
-  <Chat />
 </template>
 
 <script setup lang="ts">

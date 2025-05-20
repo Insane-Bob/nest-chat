@@ -2,7 +2,20 @@
   <div class="max-w-md mx-auto mt-10">
     <Card>
       <CardHeader>
-        <CardTitle>Chat Details</CardTitle>
+        <CardTitle>
+          <div class="flex justify-between items-center">
+            <RouterLink
+                to="/chats"
+                class="flex items-center text-gray-500 hover:text-gray-700"
+                aria-label="Back to chat list"
+                title="Back to chat list"
+            >
+              <ChevronLeft class="w-5 h-5"/>
+              Go Back
+            </RouterLink>
+            <h1 class="text-lg font-semibold">{{ chat?.chatName || 'Chat Details' }}</h1>
+          </div>
+        </CardTitle>
         <CardDescription>
           <template v-if="chat">
             Participants: {{ chat.participants.map(p => p.username).join(', ') }}
@@ -10,29 +23,42 @@
         </CardDescription>
       </CardHeader>
 
-      <CardContent class="h-96 overflow-y-auto space-y-4 bg-gray-50 rounded-md p-4">
+      <CardContent class="h-96 overflow-y-auto space-y-4 bg-gray-50 rounded-md p-4 card-content">
         <template v-if="error">
           <p class="text-red-600 text-center">{{ error }}</p>
         </template>
-
         <template v-else-if="!chat">
-          <p>Loading...</p>
+          <p class="text-center text-gray-500">Loading...</p>
         </template>
-
         <template v-else>
           <div
-              v-for="message in chat.messages"
-              :key="message._id"
-              :class="[
-              'max-w-[70%] p-3 rounded-lg shadow',
-              isOwnMessage(message) ? 'bg-blue-600 text-white self-end ml-auto' : 'bg-white text-gray-900',
-              'whitespace-pre-wrap break-words',
-            ]"
+              v-for="message in messages"
+              :key="message.messageId"
+              class="flex max-w-fit p-3 rounded-lg shadow whitespace-pre-wrap break-words"
+              :class="{
+                'self-end ml-auto bg-blue-600 text-white flex-row-reverse': isOwnMessage(message),
+                'bg-white text-gray-900': !isOwnMessage(message),
+              }"
           >
-            <div class="text-xs font-semibold mb-1">{{ message.sender.username }}</div>
-            <div>{{ message.content }}</div>
-            <div class="text-xs text-gray-300 mt-1 text-right">
-              {{ formatTime(message.timestamp) }}
+            <div class="flex flex-col">
+              <!-- Username -->
+              <div
+                  class="text-xs font-semibold mb-1"
+                  :style="{ color: getUserColor(message.sender.color) }"
+              >
+                {{ message.sender.username }}
+              </div>
+
+              <!-- Message -->
+              <div>{{ message.content }}</div>
+
+              <!-- Timestamp -->
+              <div
+                  class="text-xs text-gray-300 mt-1 text-right"
+                  :class="{ 'text-white/70': isOwnMessage(message) }"
+              >
+                {{ formatTime(message.timestamp) }}
+              </div>
             </div>
           </div>
         </template>
@@ -40,7 +66,7 @@
 
       <CardFooter class="flex gap-2 pt-4 border-t border-gray-200">
         <Input
-            v-model="messageContent"
+            v-model="message"
             placeholder="Type your message..."
             as="textarea"
             rows="1"
@@ -50,13 +76,13 @@
             :disabled="!chat"
         />
         <Button
-            :disabled="!messageContent.trim() || !chat"
+            :disabled="!message.trim() || !chat"
             @click="handleSendMessage"
             variant="default"
             class="flex items-center gap-1"
         >
           Send
-          <SendIcon class="w-5 h-5" />
+          <SendIcon class="w-5 h-5"/>
         </Button>
       </CardFooter>
     </Card>
@@ -64,7 +90,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
+import {ref, onMounted} from 'vue'
+import {useUserStore} from '@/stores/useUserStore'
+import {useToast} from "@/composables/useToastStore.ts";
 import {
   Card,
   CardHeader,
@@ -72,80 +100,85 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Send as SendIcon } from 'lucide-vue-next';
+} from '@/components/ui/card'
+import {Input} from '@/components/ui/input'
+import {Button} from '@/components/ui/button'
+import {Send as SendIcon, ChevronLeft} from 'lucide-vue-next'
+import type {Chat, Message} from '@/types/chat'
+import {getChatDetails} from '@/services/chatService'
+import {useChat} from '@/composables/useChat'
 
-import type { Participant, Message, Chat } from '@/types/chat';
+const props = defineProps<{ chatId: string }>()
 
-import { getChatDetails, sendMessage } from '@/services/api'; // à adapter selon ton architecture
+const chat = ref<Chat | null>(null)
+const error = ref('')
 
-const props = defineProps<{ chatId: string }>();
+const userStore = useUserStore()
+const userId = userStore.user?._id
+const {messages, message, sendMessage} = useChat(props.chatId)
+const {showToast} = useToast()
 
-const chat = ref<Chat | null>(null);
-const messageContent = ref('');
-const error = ref('');
+const isValidHex = (color: string) => /^#([0-9A-F]{3}){1,2}$/i.test(color);
 
-const currentUserId = ref(''); // Récupère l'id utilisateur actuel du token ou du contexte
+function getUserColor(color?: string) {
+  return color && isValidHex(color) ? color : '#000000';
+}
 
-function formatTime(timestamp: string) {
-  const d = new Date(timestamp);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function formatTime(timestamp: string | Date) {
+  const d = new Date(timestamp)
+  return d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
 }
 
 function isOwnMessage(message: Message) {
-  return message.sender._id === currentUserId.value;
+  const currentUserId = userStore.user?._id
+  const messageUserId = message.sender._id
+  console.log("Comparing IDs:", messageUserId, "vs", currentUserId)
+  return messageUserId === currentUserId
 }
 
 async function fetchChat() {
-  error.value = '';
+  error.value = ''
   try {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('No token found');
+    const token = userStore.token
+    if (!token) throw new Error('No token found')
 
-    // Exemple pour récupérer current user id depuis le token ou autre méthode
-    // Ici on simule juste un userId fixe pour l'exemple
-    currentUserId.value = 'current-user-id';
+    const data = await getChatDetails(token, props.chatId)
+    chat.value = data
 
-    const data = await getChatDetails(token, props.chatId);
-    chat.value = data;
+    messages.value = data.messages || []
   } catch (err: any) {
-    error.value = err.message || 'Failed to load chat';
+    error.value = err.message || 'Failed to load chat'
+    showToast(error.value, 'error')
   }
 }
 
 async function handleSendMessage() {
-  if (!messageContent.value.trim()) return;
+  if (!message.value.trim()) return
+  if (!userStore.user?._id) return
 
-  error.value = '';
-  try {
-    const token = localStorage.getItem('jwt');
-    if (!token) throw new Error('No token found');
-
-    if (!chat.value) throw new Error('Chat not loaded');
-
-    const data = await sendMessage(token, props.chatId, messageContent.value.trim());
-    chat.value = data; // Mise à jour du chat (messages + participants)
-    messageContent.value = '';
-  } catch (err: any) {
-    error.value = err.message || 'Failed to send message';
-  }
+  sendMessage(userStore.user._id, message.value.trim())
+  showToast('Message sent', 'success')
 }
 
-onMounted(fetchChat);
+onMounted(
+    async () => {
+      await fetchChat()
+    }
+)
 </script>
 
 <style scoped>
 .card-content {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.1) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
 }
+
 .card-content::-webkit-scrollbar {
   width: 8px;
 }
+
 .card-content::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.1);
+  background-color: rgba(0, 0, 0, 0.1);
   border-radius: 4px;
 }
 </style>

@@ -29,10 +29,9 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue';
 import type { Chat } from '@/types/chat';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-
-defineProps<{ chat: Chat | null }>();
 
 const props = defineProps<{ chat: Chat | null }>();
 

@@ -1,8 +1,9 @@
-import {Controller, Post, Body, UseGuards, Get, Request} from '@nestjs/common';
+import {Controller, Post, Body, UseGuards, Get, Request, Param, Put, NotFoundException} from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
 import { Chat } from '../../schemas/chat/chat.schema';
+import { SendMessageDto } from './dto/send-message.dto';
 
 @Controller('chats')
 export class ChatController {
@@ -10,20 +11,14 @@ export class ChatController {
 
     @UseGuards(JwtAuthGuard)
     @Post()
-    async createChat(@Body() createChatDto: CreateChatDto): Promise<Chat> {
-        return this.chatService.createChat(createChatDto);
+    async create(@Body() createChatDto: CreateChatDto, @Request() req) {
+        return this.chatService.createChat(createChatDto, req.user.userId);
     }
 
     @UseGuards(JwtAuthGuard)
     @Get()
     async getChats(@Request() req): Promise<Chat[]> {
         return this.chatService.getChats(req.user.userId);
-    }
-
-    @UseGuards(JwtAuthGuard)
-    @Get(':chatId')
-    async getChatById(@Request() req): Promise<Chat> {
-        return this.chatService.getChatById(req.params.chatId);
     }
 
     @UseGuards(JwtAuthGuard)
@@ -40,11 +35,7 @@ export class ChatController {
 
     @UseGuards(JwtAuthGuard)
     @Post(':chatId/messages')
-    async sendMessage(
-        @Param('chatId') chatId: string,
-        @Request() req,
-        @Body() sendMessageDto: SendMessageDto
-    ): Promise<Chat> {
-        return this.chatService.sendMessages(chatId, req.user.userId, sendMessageDto);
+    async sendMessage(@Param('chatId') chatId: string, @Request() req, @Body() sendMessageDto: SendMessageDto): Promise<Chat> {
+        return this.chatService.sendMessage(chatId, req.user.userId, sendMessageDto);
     }
 }
