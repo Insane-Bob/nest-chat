@@ -25,6 +25,7 @@ export function useChat(chatId: string, onNewMessage?: (message: Message) => voi
     const messages = ref<Message[]>([])
     const message = ref<string>('')
     const socket = ref<Socket | null>(null)
+    const typingUsers = ref(new Set());
 
     watch(() => chatId, (newChatId, oldChatId) => {
         if (socket.value && oldChatId) {
@@ -53,6 +54,12 @@ export function useChat(chatId: string, onNewMessage?: (message: Message) => voi
                 onNewMessage(newMsg)
             }
         })
+
+        newSocket.on('userTyping', ({ userId }) => {
+            typingUsers.value.add(userId);
+            setTimeout(() => typingUsers.value.delete(userId), 5000);
+        });
+
     })
 
     onBeforeUnmount(() => {
@@ -71,9 +78,16 @@ export function useChat(chatId: string, onNewMessage?: (message: Message) => voi
         message.value = ''
     }
 
+    function notifyTyping(chatId: string, userId: string) {
+        if (!socket.value) return;
+        socket.value.emit('typing', { chatId, userId });
+    }
+
     return {
         messages,
         message,
         sendMessage,
+        notifyTyping,
+        typingUsers,
     }
 }

@@ -40,4 +40,10 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         client.join(chatId);
         console.log(`Client ${client.id} joined chat ${chatId}`);
     }
+
+    @SubscribeMessage('typing')
+    handleTyping(client: Socket, payload: { chatId: string; userId: string }) {
+        client.to(payload.chatId).emit('userTyping', {userId: payload.userId});
+        console.log(`User ${payload.userId} is typing in chat ${payload.chatId}`);
+    }
 }

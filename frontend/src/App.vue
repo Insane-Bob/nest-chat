@@ -17,10 +17,8 @@
       <Toaster />
 
       <!-- Router View (Main) -->
-      <main class="flex-1 overflow-y-auto bg-muted/50 p-4">
-        <div class="flex justify-center">
-          <router-view />
-        </div>
+      <main class="flex-1 overflow-y-auto bg-muted/50 p-0">
+        <router-view class="h-full w-full" />
       </main>
     </div>
   </div>
