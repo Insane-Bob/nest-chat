@@ -13,13 +13,12 @@
         </Button>
       </RouterLink>
 
-      <Input
-          type="search"
-          v-model="search"
-          placeholder="Search chats..."
-          class="w-full px-3 py-2 border rounded mb-6"
-          aria-label="Search chats"
-      />
+      <div class="relative w-full max-w-sm items-center">
+        <Input id="search" type="text" placeholder="Search..." class="pl-10"/>
+        <span class="absolute start-0 inset-y-0 flex items-center justify-center px-2">
+          <Search class="size-4 text-muted-foreground"/>
+        </span>
+      </div>
 
       <NavigationMenuList class="flex flex-col gap-2 max-w-[280px]">
         <template v-if="loading">
@@ -35,7 +34,8 @@
           <NavigationMenuItem
               v-for="chat in filteredChats"
               :key="chat._id"
-              class="rounded-md hover:bg-gray-100 transition"
+              class="rounded-md hover:bg-gray-100 transition
+              hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               :title="chat.chatName"
           >
             <Button
@@ -55,24 +55,23 @@
                 </div>
               </div>
 
-              <span class="truncate font-medium text-gray-700">{{ chat.chatName }}</span>
+              <span class="truncate font-medium">{{ chat.chatName }}</span>
 
               <!-- Visible only if your are a participant or the chat is public -->
-              <span>
-                <LockOpen
-                    v-if="chat.visibility === 'public'"
-                    class="w-4 h-4 text-green-500"
-                    aria-label="Public chat"
-                    title="Public chat"
-                />
-                <Lock
-                    v-else
-                    class="w-4 h-4 text-gray-500"
-                    aria-label="Private chat"
-                    title="Private chat"
-                />
-              </span>
-
+<!--              <span>-->
+<!--                <Lock-->
+<!--                    v-if="chat.visibility === 'PRIVATE'"-->
+<!--                    class="w-4 h-4 text-gray-500"-->
+<!--                    aria-label="Private chat"-->
+<!--                    title="Private chat"-->
+<!--                />-->
+<!--                <LockOpen-->
+<!--                    v-if="chat.visibility === 'PUBLIC'"-->
+<!--                    class="w-4 h-4 text-gray-500"-->
+<!--                    aria-label="Public chat"-->
+<!--                    title="Public chat"-->
+<!--                />-->
+<!--              </span>-->
             </Button>
           </NavigationMenuItem>
         </template>
@@ -87,18 +86,18 @@ import {
   NavigationMenuItem,
   NavigationMenuList,
 } from '@/components/ui/navigation-menu'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useRouter } from 'vue-router'
-import { ref, onMounted, computed } from 'vue'
-import { getChats } from '@/services/chatService'
-import { useToast } from '@/composables/useToastStore'
-import { useUserStore } from '@/stores/useUserStore'
-import { Lock, LockOpen } from 'lucide-vue-next'
+import {Button} from '@/components/ui/button'
+import {Input} from '@/components/ui/input'
+import {useRouter} from 'vue-router'
+import {ref, onMounted, computed} from 'vue'
+import {getChats} from '@/services/chatService'
+import {useToast} from '@/composables/useToastStore'
+import {useUserStore} from '@/stores/useUserStore'
+import {Lock, LockOpen, Search} from 'lucide-vue-next'
 
 const router = useRouter()
 const user = useUserStore()
-const { showToast } = useToast()
+const {showToast} = useToast()
 
 const chats = ref<Array<any>>([])
 const search = ref('')
@@ -129,7 +128,7 @@ onMounted(async () => {
 })
 
 function handleOpenChat(chatId: string) {
-  router.push({ name: 'ChatDetails', params: { chatId } })
+  router.push({name: 'ChatDetails', params: {chatId}})
 }
 
 function isValidHex(color: string) {

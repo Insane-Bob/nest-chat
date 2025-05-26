@@ -16,16 +16,32 @@ export class Message {
     timestamp: Date;
 
     @Prop({ type: Boolean, default: false })
-    isRead: boolean;
+    isDelivered: boolean;
 
     @Prop({ type: Boolean, default: false })
-    isDelivered: boolean;
+    isRead: boolean;
 
     @Prop({ type: Boolean, default: false })
     isEdited: boolean;
 
     @Prop({ type: Boolean, default: false })
     isDeleted: boolean;
+
+    @Prop({
+        type: [
+            {
+                user: { type: Types.ObjectId, ref: 'User', required: true },
+                deliveredAt: { type: Date, default: null },
+                seenAt: { type: Date, default: null }
+            }
+        ],
+        default: []
+    })
+    status: {
+        user: Types.ObjectId;
+        deliveredAt?: Date;
+        seenAt?: Date;
+    }[];
 }
 
 export const MessageModel = SchemaFactory.createForClass(Message);

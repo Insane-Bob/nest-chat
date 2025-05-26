@@ -38,4 +38,6 @@ export class ChatController {
     async sendMessage(@Param('chatId') chatId: string, @Request() req, @Body() sendMessageDto: SendMessageDto): Promise<Chat> {
         return this.chatService.sendMessage(chatId, req.user.userId, sendMessageDto);
     }
+
+
 }

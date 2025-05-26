@@ -30,9 +30,12 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     @SubscribeMessage('sendMessage')
     async handleMessage(client: Socket, payload: { chatId: string; userId: string; content: string }) {
-        const message: SendMessageDto = { content: payload.content };
-        const chat = await this.chatService.sendMessage(payload.chatId, payload.userId, message);
-        this.server.to(payload.chatId).emit('receiveMessage', chat);
+        const messageDto: SendMessageDto = { content: payload.content, isDelivered: true, isRead: false };
+        const chat = await this.chatService.sendMessage(payload.chatId, payload.userId, messageDto);
+
+        const newMessage = chat.messages[chat.messages.length - 1];
+
+        this.server.to(payload.chatId).emit('receiveMessage', newMessage);
     }
 
     @SubscribeMessage('joinChat')

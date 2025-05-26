@@ -77,6 +77,7 @@ const handleLogin = async () => {
     await login(username.value, password.value);
     showToast('Login successful! Redirecting to your profile...', 'success');
     router.push('/profile');
+    location.reload();
   } catch (err) {
     showToast('Invalid username or password. Please try again.', 'error');
     console.error(err);

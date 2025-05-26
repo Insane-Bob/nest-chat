@@ -1,35 +1,8 @@
 <template>
   <div class="flex flex-col h-full w-full bg-gray-50">
-    <header
-        class="flex items-center justify-between px-6 h-16 border-b border-gray-300 bg-white flex-shrink-0"
-    >
-      <!-- Bouton retour désactivé dans l'exemple, à activer si besoin -->
-      <!--
-      <RouterLink
-        to="/chats"
-        class="flex items-center text-gray-500 hover:text-gray-700"
-        aria-label="Back to chat list"
-        title="Back to chat list"
-      >
-        <ChevronLeft class="w-5 h-5" />
-        Go Back
-      </RouterLink>
-      -->
-
-      <h1 class="text-lg font-semibold truncate max-w-[60%]">
-        {{ chat?.chatName || 'Chat Details' }}
-      </h1>
-
-      <div class="text-sm text-gray-600 truncate max-w-[30%]">
-        <template v-if="chat">
-          Participants: {{ chat.participants.map(p => p.username).join(', ') }}
-        </template>
-      </div>
-    </header>
-
     <div
         ref="messagesContainer"
-        class="flex-grow overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+        class="flex-grow overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 scroll-smooth"
         role="log"
         aria-live="polite"
     >
@@ -41,7 +14,7 @@
         <p class="text-center text-gray-500">Loading...</p>
       </template>
 
-      <template v-else>
+      <template v-if="chat && messagesWithDateSeparators.length > 0">
         <div
             v-for="item in messagesWithDateSeparators"
             :key="item.messageId"
@@ -59,13 +32,13 @@
             </div>
           </template>
           <template v-else>
-            <!-- Message classique -->
             <div
-                class="flex items-end max-w-[80%]"
+                class="flex max-w-[80%] gap-3 items-start"
                 :class="isOwnMessage(item) ? 'ml-auto flex-row-reverse' : 'mr-auto'"
             >
+              <!-- Avatar -->
               <div
-                  class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white select-none"
+                  class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white select-none shadow"
                   :style="{ backgroundColor: getUserColor(item.sender.color) }"
                   :aria-label="`Avatar for ${item.sender.username}`"
                   role="img"
@@ -73,13 +46,15 @@
                 {{ item.sender.username.charAt(0).toUpperCase() }}
               </div>
 
+              <!-- Message bubble -->
               <div
-                  class="ml-2 mr-2 p-3 rounded-2xl whitespace-pre-wrap break-words"
+                  class="p-3 rounded-2xl shadow whitespace-pre-wrap break-words max-w-full"
                   :class="{
-            'bg-blue-600 text-white rounded-br-none': isOwnMessage(item),
-            'bg-white text-gray-900 rounded-bl-none border border-gray-200': !isOwnMessage(item)
-          }"
+                    'bg-blue-600 text-white rounded-br-none': isOwnMessage(item),
+                    'bg-white text-gray-900 rounded-bl-none border border-gray-200': !isOwnMessage(item)
+                  }"
               >
+                <!-- Username -->
                 <div
                     class="text-xs font-semibold mb-1 select-text"
                     :style="{ color: isOwnMessage(item) ? 'inherit' : getUserColor(item.sender.color) }"
@@ -87,22 +62,55 @@
                   {{ item.sender.username }}
                 </div>
 
-                <div>{{ item.content }}</div>
+                <div class="text-sm leading-relaxed">
+                  {{ item.content }}
+                </div>
 
                 <div
-                    class="text-xs mt-1 text-right select-none"
-                    :class="{ 'text-white/70': isOwnMessage(item), 'text-gray-400': !isOwnMessage(item) }"
+                    class="text-xs mt-2 text-right select-none"
+                    :class="{
+                      'text-white/70': isOwnMessage(item),
+                      'text-gray-400': !isOwnMessage(item)
+                    }"
                 >
                   {{ formatTime(item.timestamp) }}
+
+                  <template v-if="isOwnMessage(item)">
+                    <!-- Sent -->
+                    <CheckCheckIcon
+                        v-if="item.isDelivered === true && item.isRead != true"
+                        class="inline-block w-4 h-4 ml-1 "
+                        aria-label="Message delivered"
+                    />
+
+                    <!-- Seen -->
+                    <CheckCheckIcon
+                        v-if="item.isRead === true"
+                        class="inline-block w-4 h-4 ml-1 text-white text-green-400"
+                        aria-label="Message seen"
+                    />
+                  </template>
                 </div>
               </div>
             </div>
           </template>
         </div>
 
-        <div v-if="usersTyping.length > 0" class="px-4 py-2 text-sm text-gray-500 italic">
-          {{ usersTyping.join(', ') }} {{ usersTyping.length === 1 ? 'is' : 'are' }} typing...
+        <div
+            v-if="usersTyping.length > 0"
+            class="px-4 py-2 text-sm text-muted-foreground italic flex items-center gap-1 select-none"
+        >
+          <span>{{ usersTyping.join(', ') }}</span>
+          <span class="inline-flex items-center justify-center w-14 gap-1">
+            <span class="text-2xl font-bold text-muted-foreground animate-bounce delay-75">.</span>
+            <span class="text-2xl font-bold text-muted-foreground animate-bounce delay-150">.</span>
+            <span class="text-2xl font-bold text-muted-foreground animate-bounce delay-300">.</span>
+          </span>
         </div>
+      </template>
+
+      <template v-else>
+        <p class="text-center text-gray-500 mt-12 text-sm">No messages yet. Start the conversation!</p>
       </template>
     </div>
 
@@ -128,24 +136,24 @@
           @click="handleSendMessage"
           class="flex items-center gap-1 rounded-full bg-blue-600 px-5 py-2 text-white disabled:opacity-50"
       >
-        <SendIcon class="w-5 h-5" />
+        <SendIcon class="w-5 h-5"/>
       </Button>
     </footer>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch, nextTick, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { RouterLink } from 'vue-router'
-import { Send as SendIcon, ChevronLeft } from 'lucide-vue-next'
-import { useUserStore } from '@/stores/useUserStore'
-import { useToast } from '@/composables/useToastStore'
-import { useChat } from '@/composables/useChat'
-import {getChatDetails, getMessagesGroupedBy} from '@/services/chatService'
-import type { Chat, Message } from '@/types/chat'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
+import {ref, onMounted, watch, nextTick, computed} from 'vue'
+import {useRoute} from 'vue-router'
+import {RouterLink} from 'vue-router'
+import {Send as SendIcon, ChevronLeft, CheckCheckIcon, EyeIcon} from 'lucide-vue-next'
+import {useUserStore} from '@/stores/useUserStore'
+import {useToast} from '@/composables/useToastStore'
+import {useChat} from '@/composables/useChat'
+import {getChatDetails} from '@/services/chatService'
+import type {Chat, Message} from '@/types/chat'
+import {Input} from '@/components/ui/input'
+import {Button} from '@/components/ui/button'
 
 const route = useRoute()
 const chatId = ref(route.params.chatId as string)
@@ -153,8 +161,8 @@ const chatId = ref(route.params.chatId as string)
 const chat = ref<Chat | null>(null)
 const error = ref('')
 const userStore = useUserStore()
-const { showToast } = useToast()
-const { messages, message, sendMessage, notifyTyping, typingUsers } = useChat(chatId.value)
+const {showToast} = useToast()
+const {messages, message, sendMessage, notifyTyping, typingUsers} = useChat(chatId.value)
 const messagesContainer = ref<HTMLElement | null>(null)
 
 const usersTyping = computed(() => {
@@ -177,11 +185,11 @@ const messagesWithDateSeparators = computed(() => {
 
     if (showDateSeparator) {
       return [
-        { isSeparator: true, date: msgDate, messageId: `separator-${msg.messageId}` },
-        { ...msg, isSeparator: false }
+        {isSeparator: true, date: msgDate, messageId: `separator-${msg.messageId}`},
+        {...msg, isSeparator: false}
       ]
     }
-    return [{ ...msg, isSeparator: false }]
+    return [{...msg, isSeparator: false}]
   })
 })
 
@@ -196,7 +204,7 @@ function getUserColor(color?: string) {
 
 function formatTime(timestamp: string | Date) {
   const d = new Date(timestamp)
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
 }
 
 function formatDate(dateString: string | Date) {
@@ -210,12 +218,11 @@ function formatDate(dateString: string | Date) {
 }
 
 
-function scrollToBottom() {
-  nextTick(() => {
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-    }
-  })
+async function scrollToBottom() {
+  await nextTick()
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  }
 }
 
 function emitTyping() {
@@ -225,6 +232,7 @@ function emitTyping() {
 }
 
 let typingTimeout: number | null = null
+
 function handleTyping() {
   if (typingTimeout) clearTimeout(typingTimeout)
   emitTyping()
@@ -239,10 +247,9 @@ async function loadChat(id: string) {
     const token = userStore.token
     if (!token) throw new Error('No token found')
     const data = await getChatDetails(token, id)
-    console.log(data);
     chat.value = data
     messages.value = data.messages || []
-    scrollToBottom()
+    await scrollToBottom()
   } catch (err: any) {
     error.value = err.message || 'Failed to load chat'
     showToast(error.value, 'error')
@@ -251,9 +258,9 @@ async function loadChat(id: string) {
 
 async function handleSendMessage() {
   if (!message.value.trim() || !userStore.user?._id) return
-  sendMessage(userStore.user._id, message.value.trim())
+  await sendMessage(userStore.user._id, message.value.trim())
   message.value = ''
-  // showToast('Message sent', 'success')
+  await nextTick()
   scrollToBottom()
 }
 
@@ -268,8 +275,8 @@ watch(() => route.params.chatId, (newId) => {
   }
 })
 
-watch(messages, () => {
-  scrollToBottom()
+watch(messages, async () => {
+  await scrollToBottom()
 })
 </script>
 
@@ -278,12 +285,18 @@ watch(messages, () => {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
 }
+
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border-radius: 3px;
+}
+
+.scroll-smooth {
+  scroll-behavior: smooth;
 }
 </style>

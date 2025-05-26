@@ -7,13 +7,9 @@ export class CreateChatDto {
     @IsMongoId({ each: true })
     participants: string[];
 
-    @IsMongoId()
-    ownerId: string;
-
     @IsString()
     chatName: string;
 
     @IsEnum(ChatVisibility)
-    @IsOptional()
-    visibility?: ChatVisibility;
+    visibility: ChatVisibility;
 }

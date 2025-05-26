@@ -4,6 +4,8 @@ import {Model, Types} from 'mongoose';
 import {Chat, ChatModel} from '../../schemas/chat/chat.schema';
 import {CreateChatDto} from './dto/create-chat.dto';
 import {SendMessageDto} from "./dto/send-message.dto";
+import { Message } from "../../schemas/message/message.schema";
+import {v4 as uuidv4} from 'uuid';
 
 @Injectable()
 export class ChatService {
@@ -20,9 +22,11 @@ export class ChatService {
             chatName: createChatDto.chatName,
             ownerId: userId,
             participants,
-            visibility: createChatDto.visibility || 'PRIVATE',
+            visibility: createChatDto.visibility,
             messages: [],
         });
+
+        console.log(newChat);
 
         return newChat.save();
     }
@@ -40,8 +44,6 @@ export class ChatService {
         if (!chat) {
             throw new NotFoundException('Chat not found');
         }
-
-        console.log('CHAT FETCHED FROM MONGO');
 
         return chat;
     }
@@ -64,22 +66,23 @@ export class ChatService {
             throw new NotFoundException('Chat not found');
         }
 
-        const message = {
-            messageId: new Types.ObjectId().toHexString(),
+        const message: Message = {
+            messageId: uuidv4(),
             sender: new Types.ObjectId(userId),
             content: sendMessageDto.content,
             timestamp: sendMessageDto.timestamp || new Date(),
-            isRead: sendMessageDto.isRead || false,
-            isDelivered: sendMessageDto.isDelivered || false,
-            isEdited: sendMessageDto.isEdited || false,
-            isDeleted: sendMessageDto.isDeleted || false,
+            isDelivered: sendMessageDto.isDelivered ?? false,
+            isRead: sendMessageDto.isRead ?? false,
+            isEdited: false,
+            isDeleted: false,
+            status: [],
         };
 
         chat.messages.push(message);
 
         await chat.save();
 
-            const populatedChat = await this.chatModel.findById(chatId)
+        const populatedChat = await this.chatModel.findById(chatId)
             .populate('participants', 'username avatar color _id')
             .populate('messages.sender', 'username avatar color _id')
             .exec();

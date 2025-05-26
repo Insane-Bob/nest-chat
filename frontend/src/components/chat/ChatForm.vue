@@ -25,12 +25,7 @@
               Visibility
             </Label>
 
-            <Select
-                :modelValue="visibility"
-                @update:modelValue="val => visibility = val"
-                id="visibility"
-                class="w-full"
-            >
+            <Select v-model="visibility" id="visibility" class="w-full">
               <SelectTrigger class="w-full">
                 <SelectValue placeholder="Select visibility" />
               </SelectTrigger>
@@ -124,6 +119,7 @@ import { findAllUsers } from '@/services/userService';
 import { createChat } from '@/services/chatService';
 import { useRouter } from 'vue-router';
 import { useToast } from "@/composables/useToastStore";
+import { ChatVisibility } from '@/types/chat-visibility.enum';
 
 interface User {
   _id: string;
@@ -135,7 +131,7 @@ const { showToast } = useToast();
 const router = useRouter()
 const chatName = ref('');
 const selectedParticipantId = ref('');
-const visibility = ref('PRIVATE');
+const visibility = ref<ChatVisibility>('PRIVATE');
 const allUsers = ref<User[]>([]);
 const message = ref('');
 const isError = ref(false);
@@ -169,15 +165,18 @@ const handleSubmit = async () => {
       visibility: visibility.value,
     });
 
-    message.value = 'Chat created successfully';
     isError.value = false;
     chatName.value = '';
     selectedParticipantId.value = '';
-    router.push('/chats')
     showToast('Chat created successfully', 'success');
+    location.reload();
   } catch (err: any) {
     message.value = `Error: ${err.message || 'Unknown error'}`;
     isError.value = true;
   }
 };
+
+watch(visibility, (newVal) => {
+  console.log('Visibility changed:', newVal);
+});
 </script>

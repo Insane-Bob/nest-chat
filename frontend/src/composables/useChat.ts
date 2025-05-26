@@ -19,6 +19,8 @@ interface SendMessagePayload {
     chatId: string
     userId: string
     content: string
+    isDelivered: boolean
+    isRead: boolean
 }
 
 export function useChat(chatId: string, onNewMessage?: (message: Message) => void) {
@@ -44,22 +46,18 @@ export function useChat(chatId: string, onNewMessage?: (message: Message) => voi
 
         newSocket.emit('joinChat', chatId)
 
-        newSocket.on('receiveMessage', (newChat: Chat) => {
-            console.log("RECEIVED MESSAGES:", newChat.messages)
+        newSocket.on('receiveMessage', (newMessage: Message) => {
+            messages.value.push(newMessage);
 
-            messages.value = newChat.messages
-
-            if (onNewMessage && newChat.messages.length > 0) {
-                const newMsg = newChat.messages[newChat.messages.length - 1]
-                onNewMessage(newMsg)
+            if (onNewMessage) {
+                onNewMessage(newMessage);
             }
-        })
+        });
 
         newSocket.on('userTyping', ({ userId }) => {
             typingUsers.value.add(userId);
             setTimeout(() => typingUsers.value.delete(userId), 5000);
         });
-
     })
 
     onBeforeUnmount(() => {
@@ -71,11 +69,21 @@ export function useChat(chatId: string, onNewMessage?: (message: Message) => voi
 
     function sendMessage(userId: string, content: string) {
         if (!socket.value) return
-        const payload: SendMessagePayload = { chatId, userId, content }
-        console.log("MESSAGE SENT", payload)
+        if (!content.trim()) return;
+
+        const payload: SendMessagePayload = {
+            chatId,
+            userId,
+            content,
+            isDelivered: true,
+            isRead: false,
+        }
+
+        console.log("SENDING MESSAGE:", content)
 
         socket.value.emit('sendMessage', payload)
         message.value = ''
+        typingUsers.value.clear();
     }
 
     function notifyTyping(chatId: string, userId: string) {

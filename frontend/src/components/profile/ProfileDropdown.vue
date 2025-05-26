@@ -64,6 +64,7 @@ const userColor = computed(() =>
 function logout() {
   userStore.logout()
   router.push('/login')
+  location.reload();
 }
 
 function goToProfile() {
