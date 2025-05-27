@@ -1,6 +1,6 @@
 import {Module} from '@nestjs/common';
 import {MongooseModule} from '@nestjs/mongoose';
-import {AuthModule} from './modules/auth/auth.module';
+import {AuthModule} from './modules/auth/auth.module'
 import {User, UserSchema} from './schemas/user/user.schema';
 import {UserModule} from "./modules/user/user.module";
 import {ChatModule} from "./modules/chat/chat.module";

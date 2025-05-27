@@ -41,6 +41,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @SubscribeMessage('joinChat')
     handleJoinChat(client: Socket, chatId: string) {
         client.join(chatId);
+        await this.chatService.markAsRead(chatId, userId);
         console.log(`Client ${client.id} joined chat ${chatId}`);
     }
 

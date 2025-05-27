@@ -66,7 +66,6 @@ function logout() {
   router.push('/login')
   location.reload();
 }
-
 function goToProfile() {
   router.push('/profile')
 }

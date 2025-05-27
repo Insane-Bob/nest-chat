@@ -2,9 +2,9 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:3000/chats/';
 
-export const createChat = async (token, { chatName, participants }) => {
+export const createChat = async (token, { chatName, participants, visibility }) => {
     try {
-        const response = await axios.post(`${API_URL}`, { chatName, participants }, {
+        const response = await axios.post(`${API_URL}`, { chatName, participants, visibility }, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -41,18 +41,19 @@ export const getChatDetails = async (token, chatId) => {
     }
 }
 
-export const deleteChat = async (token, chatId) => {
+export const deleteChatById = async (chatId: string, token: string) => {
     try {
+        console.log('DELETE request received for chatId:', chatId, token);
         const response = await axios.delete(`${API_URL}${chatId}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
         });
         return response.data;
-    } catch (error) {
-        throw error.response.data;
+    } catch (error: any) {
+        throw error.response?.data || error.message || error;
     }
-}
+};
 
 export const sendMessage = async (token, chatId, { content }) => {
     try {

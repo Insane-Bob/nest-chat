@@ -12,6 +12,14 @@ export class ChatService {
     constructor(@InjectModel(Chat.name) private chatModel: Model<ChatModel>) {
     }
 
+    /**
+     * Creates a new chat with the given details.
+     *
+     * @param createChatDto
+     * @param userId
+     *
+     * @return {Promise<Chat>}
+     */
     async createChat(createChatDto: CreateChatDto, userId: string): Promise<Chat> {
         const participants = Array.from(new Set([
             userId,
@@ -26,16 +34,30 @@ export class ChatService {
             messages: [],
         });
 
-        console.log(newChat);
-
         return newChat.save();
     }
 
+    /**
+     * Retrieves all chats for a given user.
+     *
+     * @param userId
+     * @return {Promise<Chat[]>}
+     */
     async getChats(userId: string): Promise<Chat[]> {
         return this.chatModel.find({participants: userId}).populate('participants', 'username').exec();
     }
 
-    async getChatDetails(chatId: string): Promise<Chat> {
+    /**
+     * Retrieves the details of a chat by its ID.
+     *
+     * @param chatId
+     * @param userId
+     *
+     * @return {Promise<Chat>}
+     */
+    async getChatDetails(chatId: string, userId: string): Promise<Chat> {
+        await this.markAsRead(chatId, userId);
+
         const chat = await this.chatModel.findById(chatId)
             .populate('participants', 'username avatar color _id')
             .populate('messages.sender', 'username avatar color _id')
@@ -48,27 +70,42 @@ export class ChatService {
         return chat;
     }
 
-    async deleteChat(chatId: string): Promise<Chat> {
-        const chat = await this.chatModel.findById(chatId);
-        if (!chat) {
-            throw new Error('Chat not found');
-        }
-        await this.chatModel.deleteOne(
-            {_id: chatId}
-        )
 
-        return chat;
+    /**
+     * Deletes a chat by its ID.
+     *
+     * @param chatId
+     *
+     * @return {Promise<Chat>}
+     */
+    async deleteChat(chatId: string): Promise<Chat> {
+        const deletedChat = await this.chatModel.findByIdAndDelete(chatId);
+        if (!deletedChat) {
+            throw new NotFoundException(`Chat with id ${chatId} not found`);
+        }
+        return deletedChat;
     }
 
+    /**
+     * Sends a message in a chat.
+     *
+     * @param chatId
+     * @param userId
+     * @param sendMessageDto
+     *
+     * @return {Promise<Chat>}
+     */
     async sendMessage(chatId: string, userId: string, sendMessageDto: SendMessageDto): Promise<Chat> {
         const chat = await this.chatModel.findById(chatId);
         if (!chat) {
             throw new NotFoundException('Chat not found');
         }
 
+        const userObjectId = new Types.ObjectId(userId);
+
         const message: Message = {
             messageId: uuidv4(),
-            sender: new Types.ObjectId(userId),
+            sender: userObjectId,
             content: sendMessageDto.content,
             timestamp: sendMessageDto.timestamp || new Date(),
             isDelivered: sendMessageDto.isDelivered ?? false,
@@ -76,11 +113,45 @@ export class ChatService {
             isEdited: false,
             isDeleted: false,
             status: [],
+            readBy: [userObjectId],
         };
 
         chat.messages.push(message);
 
         await chat.save();
+
+        const populatedChat = await this.chatModel.findById(chatId)
+            .populate('participants', 'username avatar color _id')
+            .populate('messages.sender', 'username avatar color _id')
+            .exec();
+
+        if (!populatedChat) {
+            throw new NotFoundException('Chat not found after update');
+        }
+
+        return populatedChat;
+    }
+
+    async markAsRead(chatId: string, userId: string): Promise<Chat> {
+        const chat = await this.chatModel.findById(chatId);
+        if (!chat) {
+            throw new NotFoundException('Chat not found');
+        }
+
+        const userObjectId = new Types.ObjectId(userId);
+        let updated = false;
+
+        chat.messages.forEach(message => {
+            // Si userId n'est pas dans readBy, on l'ajoute
+            if (!message.readBy.some(id => id.equals(userObjectId))) {
+                message.readBy.push(userObjectId);
+                updated = true;
+            }
+        });
+
+        if (updated) {
+            await chat.save();
+        }
 
         const populatedChat = await this.chatModel.findById(chatId)
             .populate('participants', 'username avatar color _id')

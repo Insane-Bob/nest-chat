@@ -42,6 +42,9 @@ export class Message {
         deliveredAt?: Date;
         seenAt?: Date;
     }[];
+
+    @Prop({ type: [Types.ObjectId], ref: 'User', default: [] })
+    readBy: Types.ObjectId[];
 }
 
 export const MessageModel = SchemaFactory.createForClass(Message);

@@ -19,7 +19,7 @@ export class Chat {
     @Prop({ type: [MessageModel], default: [] })
     messages: Message[];
 
-    @Prop({ type: String, enum: ChatVisibility, default: ChatVisibility.PRIVATE })
+    @Prop({ required: true, enum: ChatVisibility })
     visibility: ChatVisibility;
 }
 

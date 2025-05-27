@@ -16,4 +16,7 @@ export class SendMessageDto {
     @IsOptional()
     @IsBoolean()
     isDelivered?: boolean;
+
+    @IsString({ each: true })
+    readBy?: string[];
 }

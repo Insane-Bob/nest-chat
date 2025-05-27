@@ -52,17 +52,6 @@
 
               <div class="flex flex-col items-center space-y-2">
                 <Button
-                    variant="outline"
-                    size="sm"
-                    class="text-red-500 hover:text-red-700 border-red-500"
-                    aria-label="Delete chat"
-                    title="Delete chat"
-                    @click="handleDeleteChat(chat._id)"
-                >
-                  <TrashIcon class="h-5 w-5"/>
-                </Button>
-
-                <Button
                     variant="default"
                     size="sm"
                     class="flex items-center gap-1"
@@ -144,25 +133,10 @@ onMounted(async () => {
   }
 });
 
-async function handleDeleteChat(chatId: string) {
-  const token = localStorage.getItem('jwt');
-  if (!token) {
-    error.value = 'No token found';
-    return;
-  }
-  try {
-    await deleteChat(token, chatId);
-    chats.value = chats.value.filter(c => c._id !== chatId);
-  } catch (err: any) {
-    error.value = err.message || 'Error deleting chat';
-  }
-}
-
 function handleOpenChat(chatId: string) {
   router.push({ name: 'ChatDetails', params: { chatId } });
 }
 
-// Computed property pour filtrer les chats en fonction du champ de recherche
 const filteredChats = computed(() => {
   if (!search.value.trim()) {
     return chats.value;

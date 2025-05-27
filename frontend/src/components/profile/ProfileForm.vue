@@ -115,6 +115,7 @@ async function handleSubmit() {
     userStore.setUser(updatedUser);
 
     showToast('Profile updated successfully!', 'success')
+    location.reload();
 
   } catch (error) {
     console.error('Error updating profile:', error)

@@ -1,4 +1,4 @@
-import {Controller, Post, Body, UseGuards, Get, Request, Param, Put, NotFoundException} from '@nestjs/common';
+import {Controller, Post, Body, UseGuards, Get, Request, Param, Delete, Put, NotFoundException} from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
@@ -23,14 +23,15 @@ export class ChatController {
 
     @UseGuards(JwtAuthGuard)
     @Get(':chatId')
-    async getChatDetails(@Param('chatId') chatId: string): Promise<Chat> {
-        return this.chatService.getChatDetails(chatId);
+    async getChatDetails(@Param('chatId') chatId: string, @Request() req): Promise<Chat> {
+        return this.chatService.getChatDetails(chatId, req.user.userId);
     }
 
     @UseGuards(JwtAuthGuard)
-    @Put(':chatId')
-    async deleteChat(@Request() req): Promise<Chat> {
-        return this.chatService.deleteChat(req.params.chatId);
+    @Delete(':chatId')
+    async deleteChat(@Param('chatId') chatId: string): Promise<Chat> {
+        console.log('DELETE request received for chatId:', chatId);
+        return this.chatService.deleteChat(chatId);
     }
 
     @UseGuards(JwtAuthGuard)
@@ -39,5 +40,9 @@ export class ChatController {
         return this.chatService.sendMessage(chatId, req.user.userId, sendMessageDto);
     }
 
-
+    @UseGuards(JwtAuthGuard)
+    @Put(':chatId/mark-as-read')
+    async markAsRead(@Param('chatId') chatId: string, @Request() req): Promise<Chat> {
+        return this.chatService.markAsRead(chatId, req.user.userId);
+    }
 }

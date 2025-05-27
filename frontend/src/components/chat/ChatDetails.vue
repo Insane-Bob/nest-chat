@@ -15,6 +15,7 @@
       </template>
 
       <template v-if="chat && messagesWithDateSeparators.length > 0">
+        {{console.log("CHAT", chat)}}
         <div
             v-for="item in messagesWithDateSeparators"
             :key="item.messageId"
@@ -38,8 +39,14 @@
             >
               <!-- Avatar -->
               <div
-                  class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white select-none shadow"
-                  :style="{ backgroundColor: getUserColor(item.sender.color) }"
+                  :class="[
+                    'w-9', 'h-9',
+                    'rounded-full',
+                    'flex', 'items-center', 'justify-center',
+                    'text-sm', 'font-bold', 'text-white',
+                    'select-none', 'shadow'
+                  ]"
+                  :style="{ backgroundColor: getUserColor(item.sender.color, 0.6) }"
                   :aria-label="`Avatar for ${item.sender.username}`"
                   role="img"
               >
@@ -76,18 +83,16 @@
                   {{ formatTime(item.timestamp) }}
 
                   <template v-if="isOwnMessage(item)">
-                    <!-- Sent -->
                     <CheckCheckIcon
-                        v-if="item.isDelivered === true && item.isRead != true"
-                        class="inline-block w-4 h-4 ml-1 "
-                        aria-label="Message delivered"
+                        v-if="hasBeenReadByAll(item)"
+                        class="inline-block w-4 h-4 ml-1 text-green-400"
+                        aria-label="Message seen"
                     />
 
-                    <!-- Seen -->
                     <CheckCheckIcon
-                        v-if="item.isRead === true"
-                        class="inline-block w-4 h-4 ml-1 text-white text-green-400"
-                        aria-label="Message seen"
+                        v-else-if="item.isDelivered && !hasBeenReadByAll(item)"
+                        class="inline-block w-4 h-4 ml-1 text-gray-400"
+                        aria-label="Message delivered"
                     />
                   </template>
                 </div>
@@ -131,13 +136,19 @@
           aria-label="Message input"
           :disabled="!chat"
       />
+
+      <!-- Send Button -->
       <Button
           :disabled="!message.trim() || !chat"
           @click="handleSendMessage"
-          class="flex items-center gap-1 rounded-full bg-blue-600 px-5 py-2 text-white disabled:opacity-50"
+          class="flex items-center gap-1 rounded-full px-5 py-2 text-white disabled:opacity-50"
+          :style="{ backgroundColor: userColor }"
       >
-        <SendIcon class="w-5 h-5"/>
+        <SendIcon class="w-5 h-5" aria-hidden="true" />
       </Button>
+
+      <!-- File Upload Button -->
+
     </footer>
   </div>
 </template>
@@ -161,6 +172,7 @@ const chatId = ref(route.params.chatId as string)
 const chat = ref<Chat | null>(null)
 const error = ref('')
 const userStore = useUserStore()
+const userColor = userStore.user?.color ?? '#1E40AF'
 const {showToast} = useToast()
 const {messages, message, sendMessage, notifyTyping, typingUsers} = useChat(chatId.value)
 const messagesContainer = ref<HTMLElement | null>(null)
@@ -197,9 +209,18 @@ function isOwnMessage(msg: Message) {
   return msg.sender._id === userStore.user?._id
 }
 
-function getUserColor(color?: string) {
+function getUserColor(color: string, opacity = 0.8) {
   const isValidHex = (c: string) => /^#([0-9A-F]{3}){1,2}$/i.test(c)
-  return color && isValidHex(color) ? color : '#1E40AF'
+  if (!color || !isValidHex(color)) return `rgba(30, 64, 175, ${opacity})`
+
+  const hex = color.replace('#', '')
+  const bigint = parseInt(hex, 16)
+
+  const r = (bigint >> 16) & 255
+  const g = (bigint >> 8) & 255
+  const b = bigint & 255
+
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`
 }
 
 function formatTime(timestamp: string | Date) {
@@ -217,6 +238,14 @@ function formatDate(dateString: string | Date) {
   return formatted.charAt(0).toUpperCase() + formatted.slice(1)
 }
 
+function hasBeenReadByAll(msg: Message): boolean {
+  if (!chat.value) return false;
+  const otherParticipantIds = chat.value.participants
+      .map(p => p._id)
+      .filter(id => id !== userStore.user?._id);
+
+  return otherParticipantIds.every(id => msg.readBy?.includes(id));
+}
 
 async function scrollToBottom() {
   await nextTick()
