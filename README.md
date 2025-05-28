@@ -39,7 +39,7 @@ Ce projet est une application de messagerie en temps réel construite avec :
 ---
 
 ## 📁 Arborescence (simplifiée)
-
+```b̀ash
 📦nest-chat/
 ├── backend/
 │ └── src/
@@ -60,6 +60,7 @@ Ce projet est une application de messagerie en temps réel construite avec :
 │ └── types/ # types & enums frontend
 ├── docker-compose.yml
 └── .env-example
+```
 
 ## 🔧 Installation & Lancement
 
