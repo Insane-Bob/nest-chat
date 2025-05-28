@@ -20,7 +20,7 @@ Ce projet est une application de messagerie en temps réel construite avec :
 - 🎨 Profil avec couleur personnalisée et utilisation dans l'UI global
 - 📦 Store utilisateur via Pinia  
 - 🔔 Notifications toast  
-é
+
 ### Backend (NestJS)
 
 - 📡 WebSocket Gateway :
@@ -40,26 +40,26 @@ Ce projet est une application de messagerie en temps réel construite avec :
 
 ## 📁 Arborescence (simplifiée)
 
-nest-chat/
-├── backend/
-│   └── src/
-│       ├── modules/
-│       │   ├── auth/
-│       │   │   └── jwt/           # Logique d'authentification JWT
-│       │   ├── chat/
-│       │   │   └── dto/           # DTO pour validation des données
-│       │   └── user/
-│       └── schemas/               # Schémas Mongoose (Models)
-├── frontend/
-│   └── src/
-│       ├── components/            # Components ShadcnVue et custom
-│       ├── composables/           # Fonctions réutilisables (auth, jwt, toast...)
-│       ├── router/                # Vue Router
-│       ├── services/              # Appels API vers le backend
-│       ├── stores/                # Stores Pinia
-│       └── types/                 # Types & Enums frontend
-├── docker-compose.yml
-└── .env-example
+📦nest-chat/
+  backend
+    - src
+      - modules (controller, service, module)
+        - chat
+          - dto (déstruction des schemas pour la validation)
+        - auth
+          - jwt (logique du JWT)
+        - user
+      - schemas (schema des Models Mongoose)
+  frontend
+    - src
+      - components (utilisation des components de ShadcnVue ou de component custom)
+      - composables (fonction réutilisable utiles : auth, jwt, toast)
+      - router
+      - services (utilisation des routes back pour avoir accès dans le front)
+      - stores (stores de Pinia)
+      - types (enum Front)
+  docker-compose.yml
+  .env-example
 
 ## 🔧 Installation & Lancement
 
