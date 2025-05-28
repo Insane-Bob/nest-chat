@@ -66,12 +66,12 @@ Ce projet est une application de messagerie en temps réel construite avec :
 
 1. Cloner le projet
 2. Copier .env-example en .env et configurer les variables d’environnement
-3. Lancer la commande d̀ocker compose up --build`
+3. Lancer la commande `d̀ocker compose up --build`
 
 # Frontend 
 1. Faire la commande suivante c̀d frontend`
-2. Lancer le serveur avec ǹpm run dev`
+2. Lancer le serveur avec `ǹpm run dev`
 
 # Backend
-1. Faire ǹest start`
+1. Faire `ǹest start` pour lancer le serveur
 
