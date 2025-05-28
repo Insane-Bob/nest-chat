@@ -41,25 +41,25 @@ Ce projet est une application de messagerie en temps réel construite avec :
 ## 📁 Arborescence (simplifiée)
 
 📦nest-chat/
-  backend
-    - src
-      - modules (controller, service, module)
-        - chat
-          - dto (déstruction des schemas pour la validation)
-        - auth
-          - jwt (logique du JWT)
-        - user
-      - schemas (schema des Models Mongoose)
-  frontend
-    - src
-      - components (utilisation des components de ShadcnVue ou de component custom)
-      - composables (fonction réutilisable utiles : auth, jwt, toast)
-      - router
-      - services (utilisation des routes back pour avoir accès dans le front)
-      - stores (stores de Pinia)
-      - types (enum Front)
-  docker-compose.yml
-  .env-example
+├── backend/
+│ └── src/
+│ ├── modules/ # controllers, services, modules
+│ │ ├── chat/
+│ │ │ └── dto/ # DTOs pour validation des schemas
+│ │ ├── auth/
+│ │ │ └── jwt/ # logique JWT
+│ │ └── user/
+│ └── schemas/ # schémas Mongoose (models)
+├── frontend/
+│ └── src/
+│ ├── components/ # components ShadcnVue et custom
+│ ├── composables/ # fonctions réutilisables : auth, jwt, toast...
+│ ├── router/ # Vue Router
+│ ├── services/ # appels API backend
+│ ├── stores/ # stores Pinia
+│ └── types/ # types & enums frontend
+├── docker-compose.yml
+└── .env-example
 
 ## 🔧 Installation & Lancement
 
